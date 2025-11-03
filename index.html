@@ -1,70 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gagey V | Official Fishing Channel</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GTA‑Lite Community Leaderboard</title>
+  <meta name="description" content="Live leaderboard for the GTA‑Lite community." />
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Helvetica Neue', sans-serif;
-      background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-      text-align: center;
+    :root{
+      --bg:#0e0e12;--panel:#121421;--ink:#eaeaf0;--muted:#b7bdde;--accent:#8aa4ff;--line:#26293a;
+      --gold:#ffd76b;--silver:#dfe5f4;--bronze:#ffc08a;
     }
-
-    .overlay {
-      background: rgba(0, 0, 0, 0.5);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 0 20px;
-    }
-
-    h1 {
-      font-size: 4rem;
-      margin-bottom: 10px;
-    }
-
-    p {
-      font-size: 1.5rem;
-      font-style: italic;
-      margin-bottom: 40px;
-    }
-
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    a {
-      text-decoration: none;
-      background: #00b4d8;
-      color: white;
-      padding: 15px 30px;
-      border-radius: 30px;
-      font-size: 1.2rem;
-      transition: 0.3s;
-    }
-
-    a:hover {
-      background: #0096c7;
-    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+    .wrap{max-width:860px;margin:0 auto;padding:28px 16px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    h1{font-size:clamp(22px,3vw,30px);margin:0;color:#f6f7ff}
+    .badge{font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0f1120;color:var(--muted)}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 12px;border-bottom:1px solid var(--line);text-align:left}
+    th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    tbody tr:hover{background:#111425}
+    .rank{width:88px;font-variant-numeric:tabular-nums}
+    .name{font-weight:600}
+    .score{font-variant-numeric:tabular-nums}
+    .medal{display:inline-flex;align-items:center;gap:8px}
+    .medal .ico{width:22px;height:22px;border-radius:50%}
+    .gold{background:var(--gold)}.silver{background:var(--silver)}.bronze{background:var(--bronze)}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .pill{border:1px dashed var(--line);border-radius:10px;padding:6px 10px}
+    code{background:#0f1120;border:1px solid var(--line);border-radius:8px;padding:2px 6px}
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <h1>Gagey V</h1>
-    <p>"just good vibes and sunny days"</p>
-    <div class="buttons">
-      <a href="https://www.youtube.com/@GageyV" target="_blank">Watch on YouTube</a>
-      <a href="https://gagey-v-shop.fourthwall.com" target="_blank">Shop Merch</a>
-    </div>
+  <div class="wrap">
+    <header>
+      <h1>GTA‑Lite Leaderboard</h1>
+      <span class="badge" id="updated">Updated just now</span>
+    </header>
+
+    <section class="panel">
+      <table id="board">
+        <thead>
+          <tr>
+            <th class="rank">Rank</th>
+            <th>Player</th>
+            <th class="score">Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- rows injected by JS -->
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      <div class="pill">Tip: Edit the list inside <code>scores</code> in the script to add more players.</div>
+      <div>Host this as <code>index.html</code> on GitHub Pages / Netlify / Vercel.</div>
+    </footer>
   </div>
+
+  <script>
+    // === Data ===
+    const scores = [
+      { name: 'Reid',  score: 1167 },
+      { name: 'Sebby', score: 1093 },
+      // Add more here, e.g. { name: 'Ava', score: 870 }
+    ];
+
+    // === Logic ===
+    function buildLeaderboard(list){
+      // sort desc by score
+      list.sort((a,b)=> b.score - a.score);
+
+      // compute ranks (ties share rank)
+      let lastScore = null, lastRank = 0;
+      const withRank = list.map((p,i)=>{
+        const rank = (p.score === lastScore) ? lastRank : (i+1);
+        lastScore = p.score; lastRank = rank;
+        return { ...p, rank };
+      });
+
+      // render
+      const tbody = document.querySelector('#board tbody');
+      tbody.innerHTML = '';
+      for (const p of withRank){
+        const tr = document.createElement('tr');
+
+        // Rank + medal for top 3
+        const tdRank = document.createElement('td');
+        tdRank.className = 'rank';
+        if (p.rank === 1 || p.rank === 2 || p.rank === 3){
+          const wrap = document.createElement('span'); wrap.className = 'medal';
+          const ico = document.createElement('span'); ico.className = 'ico ' + (p.rank===1?'gold':p.rank===2?'silver':'bronze');
+          const txt = document.createElement('span'); txt.textContent = '#' + p.rank;
+          wrap.appendChild(ico); wrap.appendChild(txt); tdRank.appendChild(wrap);
+        } else {
+          tdRank.textContent = '#' + p.rank;
+        }
+
+        const tdName = document.createElement('td'); tdName.className = 'name'; tdName.textContent = p.name;
+        const tdScore = document.createElement('td'); tdScore.className = 'score'; tdScore.textContent = p.score.toString();
+
+        tr.appendChild(tdRank); tr.appendChild(tdName); tr.appendChild(tdScore);
+        tbody.appendChild(tr);
+      }
+
+      // timestamp
+      const el = document.getElementById('updated');
+      const now = new Date();
+      el.textContent = 'Updated ' + now.toLocaleString();
+    }
+
+    buildLeaderboard(scores);
+  </script>
 </body>
 </html>
